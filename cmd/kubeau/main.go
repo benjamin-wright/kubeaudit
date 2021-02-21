@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bwright.com/kubeadmin/internal/server"
+	"github.com/benjamin-wright/kubeaudit/internal/server"
 )
 
 func main() {

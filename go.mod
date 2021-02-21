@@ -1,4 +1,4 @@
-module bwright.com/kubeadmin
+module github.com/benjamin-wright/kubeaudit
 
 go 1.16
 
