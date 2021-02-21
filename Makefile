@@ -1,8 +1,9 @@
 .PHONY: build clean
 
-build: clean
-	cd client && npm run build
-	cp -r client/dist/ server/web/static/
+build: clean build-web
+
+build-web:
+	cd web && npm run build
 
 clean:
-	rm -rf server/web/static
+	rm -rf web/dist
