@@ -33,6 +33,7 @@ func (c *customFileSystem) Exists(prefix string, filepath string) bool {
 	return false
 }
 
+// Serve serve some files
 func Serve() {
 	r := gin.Default()
 
