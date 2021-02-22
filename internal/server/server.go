@@ -2,7 +2,7 @@ package server
 
 import (
 	"net/http"
-	"strings"
+	"sync"
 
 	"github.com/benjamin-wright/kubeaudit/web/dist"
 	"github.com/gin-gonic/contrib/static"
@@ -10,46 +10,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type customFileSystem struct {
-	fs http.FileSystem
-}
-
-func (c *customFileSystem) Open(name string) (http.File, error) {
-	return c.fs.Open(name)
-}
-
-func (c *customFileSystem) Exists(prefix string, filepath string) bool {
-	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
-		if _, err := c.fs.Open(p); err != nil {
-			logrus.Infof("Exists check: %+v", err)
-			return false
-		}
-
-		logrus.Infof("Exists check: true")
-		return true
-	}
-
-	logrus.Infof("Exists check: false")
-	return false
-}
-
 // Serve serve some files
-func Serve() {
-	r := gin.Default()
+func Serve(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	gin.SetMode("release")
+
+	r := gin.New()
 
 	f := dist.GetWebContent()
 	fs := http.FS(f)
 
-	entries, err := f.ReadDir(".")
+	indexPage, err := f.ReadFile("index.html")
 	if err != nil {
-		logrus.Errorf("Failed to list dirs: %+v", err)
-	} else {
-		for index, entry := range entries {
-			logrus.Infof("%d - %s", index, entry.Name())
-		}
+		logrus.Errorf("Failed to load index page: %+v", err)
+		logrus.Exit(1)
 	}
 
 	r.Use(static.Serve("/", &customFileSystem{fs: fs}))
+
+	r.GET("/", func(c *gin.Context) {
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.Write(indexPage)
+	})
 
 	r.GET("/api/status", func(c *gin.Context) {
 		c.JSON(200, gin.H{
